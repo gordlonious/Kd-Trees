@@ -11,17 +11,21 @@ import java.util.StringJoiner;
 public class KdTreeST<Value> {
     public class Node {
        public Node left, right;
-       Point2D key;
+       public Point2D key;
+       public Double max;
+       public Double min;
        public Value value;
        public Boolean isHorizontal;
        public Integer size;
-       public Node(Point2D key, Value val, int size, boolean isHorizontal) {
+       public Node(Point2D key, Value val, int size, boolean isHorizontal, double min, double max) {
            left = null;
            right = null;
            this.key = key;
            this.value = val;
            this.isHorizontal = isHorizontal;
            this.size = size;
+           this.min = min;
+           this.max = max;
        }
        
        @Override
@@ -54,17 +58,26 @@ public class KdTreeST<Value> {
        if (p == null) throw new IllegalArgumentException("calls put() with a null key");
        if (val == null) throw new IllegalArgumentException("delete operation is not supported");
        boolean horiz = false;  // root splits plane vertically
-       root = put(root, p, val, horiz);
+       root = put(root, p, val, horiz, Integer.MIN_VALUE, Integer.MAX_VALUE);
    }
-   private Node put(Node r, Point2D key, Value val, boolean splitsHorizontally) {
-       if (r == null) return new Node(key, val, 1, splitsHorizontally);
+   private Node put(Node r, Point2D key, Value val, boolean splitsHorizontally, double min, double max) {
+       if (r == null) return new Node(key, val, 1, splitsHorizontally, min, max);
+       
        int cmp;
        if(splitsHorizontally) cmp = Point2D.Y_ORDER.compare(key, r.key);
        else cmp = Point2D.X_ORDER.compare(key, r.key);
+       
        splitsHorizontally = !splitsHorizontally;
-       if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally);
-       else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally);
-       else r.value = val;  // overwrites value at tree[key]
+       if(r.isHorizontal) {
+            if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, key.y(), r.key.y());
+            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.y(), Double.MAX_VALUE); // can there be a case where max will not be infinity here?
+            else r.value = val;  // overwrites value at tree[key]
+       } else {
+           if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, key.x(), r.key.x());
+           else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.x(), Double.MAX_VALUE);
+           else r.value = val;
+       }
+       
        r.size = 1 + size(r.left) + size(r.right); // calculate tree/subtree size rooted at r
        return r;
    }
@@ -115,38 +128,38 @@ public class KdTreeST<Value> {
             a.add(r.key);
         }
         
-        if(nodeLineIntersectsQueryRect(r, r.left, rect)) {
+        if(r.left.min >= r.min && r.left.max <= r.max) {
             range(r.left, rect, a);  // go left
         }
         
-        if(nodeLineIntersectsQueryRect(r, r.right, rect)) {
+        if(r.right.min >= r.min && r.right.max <= r.max) {
             range(r.right, rect, a); // go right
         }
     }
     
     // bound to be some bugs here.... what happens when points start landing on top of each-other's lines/plane-partitions again??
     // this is insuffecient to draw the node line.... all previous boundaries must be considered (see worksheet)
-    private boolean nodeLineIntersectsQueryRect(Node r, Node rChild, RectHV rect) {
-        if(rChild == null) return false;
-        assert rChild.isHorizontal == !r.isHorizontal;
-        RectHV nodeLine;
-        if(rChild.isHorizontal) {
-            boolean childIsLeft = rChild.key.x() < r.key.x();
-            if(childIsLeft) {
-                nodeLine = new RectHV(Integer.MIN_VALUE, rChild.key.y(), r.key.x(), rChild.key.y());
-            } else {
-                nodeLine = new RectHV(r.key.x(), rChild.key.y(), Integer.MAX_VALUE, rChild.key.y());
-            }
-        } else {
-            boolean childIsUp = rChild.key.y() > r.key.y();
-            if(childIsUp) {
-                nodeLine = new RectHV(rChild.key.x(), r.key.y(), rChild.key.x(), Integer.MAX_VALUE);
-            } else {
-                nodeLine = new RectHV(rChild.key.x(), Integer.MIN_VALUE, rChild.key.x(), r.key.y());
-            }
-        }
-        return rect.intersects(nodeLine);
-    }
+//    private boolean nodeLineIntersectsQueryRect(Node r, Node rChild, RectHV rect) {
+//        if(rChild == null) return false;
+//        assert rChild.isHorizontal == !r.isHorizontal;
+//        RectHV nodeLine;
+//        if(rChild.isHorizontal) {
+//            boolean childIsLeft = rChild.key.x() < r.key.x();
+//            if(childIsLeft) {
+//                nodeLine = new RectHV(Integer.MIN_VALUE, rChild.key.y(), r.key.x(), rChild.key.y());
+//            } else {
+//                nodeLine = new RectHV(r.key.x(), rChild.key.y(), Integer.MAX_VALUE, rChild.key.y());
+//            }
+//        } else {
+//            boolean childIsUp = rChild.key.y() > r.key.y();
+//            if(childIsUp) {
+//                nodeLine = new RectHV(rChild.key.x(), r.key.y(), rChild.key.x(), Integer.MAX_VALUE);
+//            } else {
+//                nodeLine = new RectHV(rChild.key.x(), Integer.MIN_VALUE, rChild.key.x(), r.key.y());
+//            }
+//        }
+//        return rect.intersects(nodeLine);
+//    }
    
    @Override 
    public String toString() {

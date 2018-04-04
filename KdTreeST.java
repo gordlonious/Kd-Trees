@@ -69,12 +69,12 @@ public class KdTreeST<Value> {
        
        splitsHorizontally = !splitsHorizontally;
        if(r.isHorizontal) {
-            if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, key.y(), r.key.y());
-            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.y(), Double.MAX_VALUE); // can there be a case where max will not be infinity here?
+            if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, r.min, r.key.y());
+            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.y(), r.max); // can there be a case where max will not be infinity here?
             else r.value = val;  // overwrites value at tree[key]
        } else {
-           if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, key.x(), r.key.x());
-           else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.x(), Double.MAX_VALUE);
+           if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, r.min, r.key.x());
+           else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.x(), r.max);
            else r.value = val;
        }
        
@@ -128,11 +128,11 @@ public class KdTreeST<Value> {
             a.add(r.key);
         }
         
-        if(r.left.min >= r.min && r.left.max <= r.max) {
+        if(r.left != null && r.left.min >= r.min && r.left.max <= r.max) {
             range(r.left, rect, a);  // go left
         }
         
-        if(r.right.min >= r.min && r.right.max <= r.max) {
+        if(r.right != null && r.right.min >= r.min && r.right.max <= r.max) {
             range(r.right, rect, a); // go right
         }
     }
@@ -185,11 +185,14 @@ public class KdTreeST<Value> {
        st.put(new Point2D(0.2, 0.3), "level 2");
        st.put(new Point2D(0.4, 0.7), "level 2");
        st.put(new Point2D(0.9, 0.6), "level 1");
-       for(Point2D p : st.points()) {
-           System.out.printf("%s ", p.toString());
-       }
-       System.out.printf("%n%b%n", st.contains(new Point2D(0.4, 0.7)));
-       System.out.println(st.toString());
-       System.out.printf("tree size: %s%n", new Integer(st.size()).toString());
+//       for(Point2D p : st.points()) {
+//           System.out.printf("%s ", p.toString());
+//       }
+//       System.out.printf("%n%b%n", st.contains(new Point2D(0.4, 0.7)));
+//       System.out.println(st.toString());
+//       System.out.printf("tree size: %s%n", new Integer(st.size()).toString());
+        for (Point2D p : st.range(new RectHV(0, 0, 1, 1))) {
+            System.out.println(p.toString());
+        }
    }
 }

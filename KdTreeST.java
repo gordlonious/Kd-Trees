@@ -12,20 +12,24 @@ public class KdTreeST<Value> {
     public class Node {
        public Node left, right;
        public Point2D key;
-       public Double max;
-       public Double min;
+       public Double xmax;
+       public Double xmin;
+       public Double ymin;
+       public Double ymax;
        public Value value;
        public Boolean isHorizontal;
        public Integer size;
-       public Node(Point2D key, Value val, int size, boolean isHorizontal, double min, double max) {
+       public Node(Point2D key, Value val, int size, boolean isHorizontal, double xmin, double xmax, double ymin, double ymax) {
            left = null;
            right = null;
            this.key = key;
            this.value = val;
            this.isHorizontal = isHorizontal;
            this.size = size;
-           this.min = min;
-           this.max = max;
+           this.xmin = xmin;
+           this.xmax = xmax;
+           this.ymin = ymin;
+           this.ymax = ymax;
        }
        
        @Override
@@ -58,10 +62,10 @@ public class KdTreeST<Value> {
        if (p == null) throw new IllegalArgumentException("calls put() with a null key");
        if (val == null) throw new IllegalArgumentException("delete operation is not supported");
        boolean horiz = false;  // root splits plane vertically
-       root = put(root, p, val, horiz, Integer.MIN_VALUE, Integer.MAX_VALUE);
+       root = put(root, p, val, horiz, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
    }
-   private Node put(Node r, Point2D key, Value val, boolean splitsHorizontally, double min, double max) {
-       if (r == null) return new Node(key, val, 1, splitsHorizontally, min, max);
+   private Node put(Node r, Point2D key, Value val, boolean splitsHorizontally, double xmin, double xmax, double ymin, double ymax) {
+       if (r == null) return new Node(key, val, 1, splitsHorizontally, xmin, xmax, ymin, ymax);
        
        int cmp;
        if(splitsHorizontally) cmp = Point2D.Y_ORDER.compare(key, r.key);
@@ -69,12 +73,12 @@ public class KdTreeST<Value> {
        
        splitsHorizontally = !splitsHorizontally;
        if(r.isHorizontal) {
-            if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, r.min, r.key.y());
-            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.y(), r.max); // can there be a case where max will not be infinity here?
+            if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, xmin, xmax, ymin, r.key.y());
+            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, xmin, xmax, r.key.y(), ymax); // can there be a case where max will not be infinity here?
             else r.value = val;  // overwrites value at tree[key]
        } else {
-           if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, r.min, r.key.x());
-           else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.x(), r.max);
+           if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, xmin, r.key.x(), ymin, ymax);
+           else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, r.key.x(), xmax, ymin, ymax);
            else r.value = val;
        }
        
@@ -123,43 +127,19 @@ public class KdTreeST<Value> {
     }
     
     private void range(Node r, RectHV rect, ArrayList<Point2D> a) {
-        if(r == null) return;
+        // if(r == null) return;  // // shouldn't be necessary
         if(rect.contains(r.key)) {
             a.add(r.key);
         }
         
-        if(r.left != null && r.left.min >= r.min && r.left.max <= r.max) {
+        if(r.left != null && r.left.xmax >= rect.xmin() && r.left.xmin <= rect.xmax() && r.left.ymax >= rect.ymin() && r.left.ymin <= rect.ymax()) {
             range(r.left, rect, a);  // go left
         }
         
-        if(r.right != null && r.right.min >= r.min && r.right.max <= r.max) {
+        if(r.right != null && r.right.xmax >= rect.xmin() && r.right.xmin <= rect.xmax() && r.right.ymax >= rect.ymin() && r.right.ymin <= rect.ymax()) {
             range(r.right, rect, a); // go right
         }
     }
-    
-    // bound to be some bugs here.... what happens when points start landing on top of each-other's lines/plane-partitions again??
-    // this is insuffecient to draw the node line.... all previous boundaries must be considered (see worksheet)
-//    private boolean nodeLineIntersectsQueryRect(Node r, Node rChild, RectHV rect) {
-//        if(rChild == null) return false;
-//        assert rChild.isHorizontal == !r.isHorizontal;
-//        RectHV nodeLine;
-//        if(rChild.isHorizontal) {
-//            boolean childIsLeft = rChild.key.x() < r.key.x();
-//            if(childIsLeft) {
-//                nodeLine = new RectHV(Integer.MIN_VALUE, rChild.key.y(), r.key.x(), rChild.key.y());
-//            } else {
-//                nodeLine = new RectHV(r.key.x(), rChild.key.y(), Integer.MAX_VALUE, rChild.key.y());
-//            }
-//        } else {
-//            boolean childIsUp = rChild.key.y() > r.key.y();
-//            if(childIsUp) {
-//                nodeLine = new RectHV(rChild.key.x(), r.key.y(), rChild.key.x(), Integer.MAX_VALUE);
-//            } else {
-//                nodeLine = new RectHV(rChild.key.x(), Integer.MIN_VALUE, rChild.key.x(), r.key.y());
-//            }
-//        }
-//        return rect.intersects(nodeLine);
-//    }
    
    @Override 
    public String toString() {
@@ -185,6 +165,11 @@ public class KdTreeST<Value> {
        st.put(new Point2D(0.2, 0.3), "level 2");
        st.put(new Point2D(0.4, 0.7), "level 2");
        st.put(new Point2D(0.9, 0.6), "level 1");
+       st.put(new Point2D(0.4, 0.1), "root");
+       st.put(new Point2D(0.1, 0.2), "level 1");
+       st.put(new Point2D(0.9, 0.8), "level 2");
+       st.put(new Point2D(0.7, 0.1), "level 2");
+       st.put(new Point2D(0.5, 0.5), "level 1");
 //       for(Point2D p : st.points()) {
 //           System.out.printf("%s ", p.toString());
 //       }

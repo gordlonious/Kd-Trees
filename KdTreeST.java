@@ -1,6 +1,8 @@
+import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.RectHV;
+import edu.princeton.cs.algs4.Stopwatch;
 import java.util.ArrayList;
 import java.util.StringJoiner;
 /**
@@ -170,14 +172,38 @@ public class KdTreeST<Value> {
        st.put(new Point2D(0.9, 0.8), "level 2");
        st.put(new Point2D(0.7, 0.1), "level 2");
        st.put(new Point2D(0.5, 0.5), "level 1");
-//       for(Point2D p : st.points()) {
-//           System.out.printf("%s ", p.toString());
-//       }
-//       System.out.printf("%n%b%n", st.contains(new Point2D(0.4, 0.7)));
-//       System.out.println(st.toString());
-//       System.out.printf("tree size: %s%n", new Integer(st.size()).toString());
+       
+// test points
+       for(Point2D p : st.points()) {
+           System.out.printf("%s ", p.toString());
+       }
+
+// test contains
+       System.out.printf("%ncontains should be true, actual is b%n", st.contains(new Point2D(0.4, 0.7)));
+
+// test size: should be 10
+       System.out.printf("tree size should be 10, actual is %s%n", new Integer(st.size()).toString());
+       
+// test range
         for (Point2D p : st.range(new RectHV(0, 0, 1, 1))) {
             System.out.println(p.toString());
+        }
+        
+// test kdtree creation
+//  // input 100K file print then print elapsed time
+        KdTreeST<String> st1 = new KdTreeST<>();
+        if(args.length > 0) {
+            String hundredk = args[0];
+            In in = new In(hundredk);
+            ArrayList<Point2D> a1 = new ArrayList<>();
+            for (int i = 0; !in.isEmpty(); i++) {
+                double x = in.readDouble();
+                double y = in.readDouble();
+                a1.add(new Point2D(x, y));
+            }
+            Stopwatch w1 = new Stopwatch();
+            a1.stream().forEach(p -> st1.put(p, "storage data"));
+            System.out.printf("It took %f seconds to build a %d node kdtree%n", w1.elapsedTime(), st1.size());
         }
    }
 }

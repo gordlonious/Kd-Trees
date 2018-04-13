@@ -252,7 +252,8 @@ public class KdTreeST<Value> {
             a1.stream().forEach(p -> st1.put(p, "storage data"));
             System.out.printf("It took %f seconds to build a %d node kdtree%n", w1.elapsedTime(), st1.size());
         }
-        
+// test kdtree creation
+//  // input 1M file print then print elapsed time
         if(args.length > 1) {
             KdTreeST<String> st2 = new KdTreeST<>();
             String onemillion = args[1];

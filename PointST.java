@@ -1,7 +1,11 @@
+import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
+import edu.princeton.cs.algs4.StdOut;
 import java.util.ArrayList;
 import java.util.TreeMap;
+import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.Stopwatch;
 /**
  *
  * @author gordl
@@ -53,5 +57,53 @@ public class PointST<Value> {
        }
        return tmp;
    } // a nearest neighbor to point p; null if the symbol table is empty
-//   public static void main(String[] args)                  // unit testing of the methods (not graded) 
+   public static void main(String[] args) {
+       In in1 = new In("input100K.txt");
+       PointST<Integer> brute = new PointST<>();
+       for (int i = 0; !in1.isEmpty(); i++) {
+           double x = in1.readDouble();
+           double y = in1.readDouble();
+           Point2D p = new Point2D(x, y);
+           brute.put(p, i);
+       }
+      
+       int count = 0;
+       ArrayList<Point2D> a3 = new ArrayList<>();
+       for(Point2D p3 : brute.points()) {
+           a3.add(new Point2D(StdRandom.uniform() , StdRandom.uniform()));
+       }
+       
+       Stopwatch sw = new Stopwatch();
+       while (sw.elapsedTime() < 1)
+       {
+        brute.nearest(a3.get(count));
+        count++;
+       }
+       StdOut.printf("Nearested "+ count + " many times.%n");
+       
+       In in2 = new In("input1M.txt");
+       PointST<Integer> brute2 = new PointST<>();
+       for (int i = 0; !in2.isEmpty(); i++) {
+           double x = in2.readDouble();
+           double y = in2.readDouble();
+           Point2D p2 = new Point2D(x, y);
+           brute2.put(p2, i);
+       }
+      
+       int c2 = 0;
+       Point2D p2 = new Point2D(StdRandom.uniform() , StdRandom.uniform());
+       
+       ArrayList<Point2D> a4 = new ArrayList<>();
+       for(Point2D p3 : brute2.points()) {
+           a4.add(new Point2D(StdRandom.uniform() , StdRandom.uniform()));
+       }
+       
+       Stopwatch sw2 = new Stopwatch();
+       while (sw2.elapsedTime() < 1)
+       {
+        brute2.nearest(a4.get(c2));
+        c2++;
+       }
+       StdOut.printf("from 1 million nodes we Nearested " + c2 + " many times.%n");
+  }
 }

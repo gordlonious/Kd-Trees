@@ -2,6 +2,8 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.RectHV;
+import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.Stopwatch;
 import java.util.ArrayList;
 import java.util.StringJoiner;
@@ -76,7 +78,7 @@ public class KdTreeST<Value> {
        splitsHorizontally = !splitsHorizontally;
        if(r.isHorizontal) {
             if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, xmin, xmax, ymin, r.key.y());
-            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, xmin, xmax, r.key.y(), ymax); // can there be a case where max will not be infinity here?
+            else if(cmp > 0) r.right = put(r.right, key, val, splitsHorizontally, xmin, xmax, r.key.y(), ymax);
             else r.value = val;  // overwrites value at tree[key]
        } else {
            if(cmp < 0) r.left = put(r.left, key, val, splitsHorizontally, xmin, r.key.x(), ymin, ymax);
@@ -142,6 +144,50 @@ public class KdTreeST<Value> {
             range(r.right, rect, a); // go right
         }
     }
+    
+    // a nearest neighbor to point p; null if the symbol table is empty
+	public Point2D nearest(Point2D qPoint) {
+		Node champ = null;
+		return nearest(root, qPoint, champ).key;
+	}
+	
+	private Node nearest(Node ch, Point2D qPoint, Node champ) {
+
+		//check if this point is closer to the query point than the current best (champion)
+		if (champ == null || qPoint.distanceSquaredTo(champ.key) > qPoint.distanceSquaredTo(ch.key)) //distanceFrom(n.key,qPoint) < distanceFrom(n.key,champ.key))
+			champ = ch;
+		
+		
+		boolean checkLeft = false;
+		boolean checkRight = false;		
+		RectHV leftBound = null;
+		RectHV rightBound = null;
+		
+		// if bounding rectangle of this child is closer than champ
+		if (ch.left != null) {
+			leftBound = new RectHV(ch.left.xmin, ch.left.ymin, ch.left.xmax, ch.left.ymax);
+			if (leftBound.distanceSquaredTo(qPoint) < qPoint.distanceSquaredTo(champ.key)) 
+				checkLeft = true;
+		}
+			
+		if (ch.right != null) {
+			rightBound = new RectHV(ch.right.xmin, ch.right.ymin, ch.right.xmax, ch.right.ymax);
+			if (rightBound.distanceSquaredTo(qPoint) < qPoint.distanceSquaredTo(champ.key)) 
+				checkRight = true;
+		}
+			
+		//  qpoint is to the left of node
+		if (ch.isHorizontal && ch.key.x() > qPoint.x()) {
+				if (ch.left != null && checkLeft)  {champ = nearest(ch.left, qPoint, champ);} // check left side
+				if (ch.right != null && checkRight) {champ = nearest(ch.right, qPoint, champ);} // check right side
+		} else 	{	
+				if (ch.right != null && checkRight) {champ = nearest(ch.right, qPoint, champ);} // check right side	
+				if (ch.left != null && checkLeft)  {champ = nearest(ch.left, qPoint, champ);} // check left side			
+		}
+
+		return champ;
+	}
+
    
    @Override 
    public String toString() {
@@ -162,7 +208,7 @@ public class KdTreeST<Value> {
 
    public static void main(String[] args) {
        KdTreeST<String> st = new KdTreeST<>();
-       st.put(new Point2D(0.7, 0.2), "root");
+       st.put(new Point2D(0.6, 0.2), "root");
        st.put(new Point2D(0.5, 0.4), "level 1");
        st.put(new Point2D(0.2, 0.3), "level 2");
        st.put(new Point2D(0.4, 0.7), "level 2");
@@ -171,6 +217,7 @@ public class KdTreeST<Value> {
        st.put(new Point2D(0.1, 0.2), "level 1");
        st.put(new Point2D(0.9, 0.8), "level 2");
        st.put(new Point2D(0.7, 0.1), "level 2");
+       st.put(new Point2D(0.7, 0.5), "level 1");
        st.put(new Point2D(0.5, 0.5), "level 1");
        
 // test points
@@ -179,10 +226,10 @@ public class KdTreeST<Value> {
        }
 
 // test contains
-       System.out.printf("%ncontains should be true, actual is b%n", st.contains(new Point2D(0.4, 0.7)));
+       System.out.printf("%ncontains should be true, actual is %b%n", st.contains(new Point2D(0.4, 0.7)));
 
 // test size: should be 10
-       System.out.printf("tree size should be 10, actual is %s%n", new Integer(st.size()).toString());
+       System.out.printf("tree size should be 11, actual is %d%n", st.size());
        
 // test range
         for (Point2D p : st.range(new RectHV(0, 0, 1, 1))) {
@@ -191,8 +238,8 @@ public class KdTreeST<Value> {
         
 // test kdtree creation
 //  // input 100K file print then print elapsed time
-        KdTreeST<String> st1 = new KdTreeST<>();
         if(args.length > 0) {
+            KdTreeST<String> st1 = new KdTreeST<>();
             String hundredk = args[0];
             In in = new In(hundredk);
             ArrayList<Point2D> a1 = new ArrayList<>();
@@ -205,5 +252,69 @@ public class KdTreeST<Value> {
             a1.stream().forEach(p -> st1.put(p, "storage data"));
             System.out.printf("It took %f seconds to build a %d node kdtree%n", w1.elapsedTime(), st1.size());
         }
+        
+        if(args.length > 1) {
+            KdTreeST<String> st2 = new KdTreeST<>();
+            String onemillion = args[1];
+            In in = new In(onemillion);
+            ArrayList<Point2D> a1 = new ArrayList<>();
+            for (int i = 0; !in.isEmpty(); i++) {
+                double x = in.readDouble();
+                double y = in.readDouble();
+                a1.add(new Point2D(x, y));
+            }
+            Stopwatch w2 = new Stopwatch();
+            a1.stream().forEach(p -> st2.put(p, "storage data"));
+            System.out.printf("It took %f seconds to build a %d node kdtree%n", w2.elapsedTime(), st2.size());
+            
+            // test range
+            Stopwatch st2s = new Stopwatch();
+            st2.range(new RectHV(0.12, 0.2, 0.8, 0.8));
+            System.out.printf("It took %f seconds to calculate the range of a large rectangle%n", st2s.elapsedTime());
+        }
+        
+       In in1 = new In("input100K.txt");
+       KdTreeST<Integer> kdtree3 = new KdTreeST<>();
+       for (int i = 0; !in1.isEmpty(); i++) {
+           double x = in1.readDouble();
+           double y = in1.readDouble();
+           Point2D p = new Point2D(x, y);
+           kdtree3.put(p, i);
+       }
+      
+       int count = 0;
+       ArrayList<Point2D> a3 = new ArrayList<>();
+       for(Point2D p : kdtree3.points()) {
+           a3.add(new Point2D(StdRandom.uniform() , StdRandom.uniform()));
+       }
+        Stopwatch sw = new Stopwatch();
+        while (sw.elapsedTime() < 1)
+        {
+         kdtree3.nearest(a3.get(count));
+         count++;
+        }
+        StdOut.println("For 110K nodes Nearested " + count + " many times in 1 second.");
+        
+       In in2 = new In("input1M.txt");
+       KdTreeST<Integer> kdtree4 = new KdTreeST<>();
+       for (int i = 0; !in2.isEmpty(); i++) {
+           double x = in2.readDouble();
+           double y = in2.readDouble();
+           Point2D p = new Point2D(x, y);
+           kdtree4.put(p, i);
+       }
+      
+       int c2 = 0;
+       ArrayList<Point2D> a4 = new ArrayList<>();
+       for(Point2D p : kdtree4.points()) {
+           a4.add(new Point2D(StdRandom.uniform() , StdRandom.uniform()));
+       }
+        Stopwatch sw2 = new Stopwatch();
+        while (sw2.elapsedTime() < 1)
+        {
+         kdtree4.nearest(a4.get(c2));
+         c2++;
+        }
+        StdOut.println("For 1 Million nodes we Nearested " + c2 + " many times in 1 sec");
    }
 }

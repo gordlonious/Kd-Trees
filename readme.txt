@@ -1,9 +1,9 @@
 /******************************************************************************
- *  Name:     
+ *  Name: Gordon Portzline
  *  NetID:    
  *  Precept:  
  *
- *  Partner Name:       
+ *  Partner Name: Jack    
  *  Partner NetID:      
  *  Partner Precept:    
  *

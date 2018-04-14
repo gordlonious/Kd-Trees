@@ -58,6 +58,33 @@ public class PointST<Value> {
        return tmp;
    } // a nearest neighbor to point p; null if the symbol table is empty
    public static void main(String[] args) {
+       PointST<String> st = new PointST<>();
+       st.put(new Point2D(0.6, 0.2), "root");
+       st.put(new Point2D(0.5, 0.4), "level 1");
+       st.put(new Point2D(0.2, 0.3), "level 2");
+       st.put(new Point2D(0.4, 0.7), "level 2");
+       st.put(new Point2D(0.9, 0.6), "level 1");
+       st.put(new Point2D(0.4, 0.1), "root");
+       st.put(new Point2D(0.1, 0.2), "level 1");
+       st.put(new Point2D(0.9, 0.8), "level 2");
+       st.put(new Point2D(0.7, 0.1), "level 2");
+       st.put(new Point2D(0.7, 0.5), "level 1");
+       st.put(new Point2D(0.5, 0.5), "level 1");
+       
+// test points
+       for(Point2D p : st.points()) {
+           System.out.printf("%s ", p.toString());
+       }
+
+// test contains
+       System.out.printf("%ncontains should be true, actual is %b%n", st.contains(new Point2D(0.4, 0.7)));
+
+// test size: should be 10
+       System.out.printf("tree size should be 11, actual is %d%n", st.size());
+       
+// test get
+       System.out.println(st.get(new Point2D(0.5, 0.5)));
+        
        In in1 = new In("input100K.txt");
        PointST<Integer> brute = new PointST<>();
        for (int i = 0; !in1.isEmpty(); i++) {
@@ -66,6 +93,8 @@ public class PointST<Value> {
            Point2D p = new Point2D(x, y);
            brute.put(p, i);
        }
+       
+       System.out.println(brute.size());
       
        int count = 0;
        ArrayList<Point2D> a3 = new ArrayList<>();
@@ -79,7 +108,7 @@ public class PointST<Value> {
         brute.nearest(a3.get(count));
         count++;
        }
-       StdOut.printf("Nearested "+ count + " many times.%n");
+       StdOut.printf("We calcluated nearest %d many times for a %d sized tree.%n", count, brute.size());
        
        In in2 = new In("input1M.txt");
        PointST<Integer> brute2 = new PointST<>();
@@ -104,6 +133,6 @@ public class PointST<Value> {
         brute2.nearest(a4.get(c2));
         c2++;
        }
-       StdOut.printf("from 1 million nodes we Nearested " + c2 + " many times.%n");
+       StdOut.printf("We calcluated nearest %d many times for a %d sized tree.%n", c2, brute2.size());
   }
 }

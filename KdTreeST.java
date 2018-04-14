@@ -228,6 +228,9 @@ public class KdTreeST<Value> {
 // test contains
        System.out.printf("%ncontains should be true, actual is %b%n", st.contains(new Point2D(0.4, 0.7)));
 
+// test get
+        System.out.println(st.get(new Point2D(0.4, 0.7)));
+
 // test size: should be 10
        System.out.printf("tree size should be 11, actual is %d%n", st.size());
        
@@ -294,7 +297,7 @@ public class KdTreeST<Value> {
          kdtree3.nearest(a3.get(count));
          count++;
         }
-        StdOut.println("For 110K nodes Nearested " + count + " many times in 1 second.");
+        StdOut.printf("We calcluated nearest %d many times for a %d sized tree.%n", count, kdtree3.size());
         
        In in2 = new In("input1M.txt");
        KdTreeST<Integer> kdtree4 = new KdTreeST<>();
@@ -316,6 +319,6 @@ public class KdTreeST<Value> {
          kdtree4.nearest(a4.get(c2));
          c2++;
         }
-        StdOut.println("For 1 Million nodes we Nearested " + c2 + " many times in 1 sec");
+        StdOut.printf("We calcluated nearest %d many times for a %d sized tree.%n", c2, kdtree4.size());
    }
 }

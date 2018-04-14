@@ -3,7 +3,7 @@
  *  NetID:    
  *  Precept:  
  *
- *  Partner Name: Jack    
+ *  Partner Name: Jack Scothorne
  *  Partner NetID:      
  *  Partner Precept:    
  *
